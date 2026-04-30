@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BuildControl</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+</head>
+
+<body>
+
+  <main class="container">
+
+    <header class="banner">
+  <img src="./banner-buildcontrol.png" alt="BuildControl Banner">
+</header>
+
+    <!-- =============================
+         ADICIONAR MATERIAL
+    ============================= -->
+    <section class="card">
+      <h2>Adicionar material</h2>
+
+      <input type="text" id="material" placeholder="Nome do material">
+      <input type="number" id="quantidade" placeholder="Quantidade">
+      <input type="number" id="valor" placeholder="Valor unitário R$">
+
+      <button onclick="adicionarMaterial()">Adicionar</button>
+    </section>
+
+    <!-- =============================
+         LISTA DE MATERIAIS
+    ============================= -->
+    <section class="card">
+      <h2>Lista de materiais</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Qtd</th>
+            <th>Valor</th>
+            <th>Total</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+
+        <tbody id="tabelaMateriais"></tbody>
+      </table>
+    </section>
+
+    <!-- =============================
+         DINHEIRO GUARDADO
+    ============================= -->
+    <section class="card">
+      <h2>Dinheiro guardado por mês</h2>
+
+      <input list="meses" id="mes" placeholder="Escolha o mês">
+
+      <datalist id="meses">
+        <option value="Janeiro">
+        <option value="Fevereiro">
+        <option value="Março">
+        <option value="Abril">
+        <option value="Maio">
+        <option value="Junho">
+        <option value="Julho">
+        <option value="Agosto">
+        <option value="Setembro">
+        <option value="Outubro">
+        <option value="Novembro">
+        <option value="Dezembro">
+      </datalist>
+
+      <input type="number" id="valorMes" placeholder="Valor guardado R$">
+
+      <button onclick="adicionarGuardado()">Adicionar</button>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Valor guardado</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+
+        <tbody id="tabelaGuardado"></tbody>
+      </table>
+    </section>
+
+    <!-- =============================
+         GRÁFICO
+    ============================= -->
+    <section class="card">
+      <h2>Gráfico de dinheiro guardado por mês</h2>
+      <div class="grafico-box">
+  <canvas id="graficoGuardado"></canvas>
+</div>
+    </section>
+
+    <!-- =============================
+         RESUMO
+    ============================= -->
+    <section class="resumo">
+      <p>Total dos materiais <strong id="totalMateriais">R$ 0,00</strong></p>
+      <p>Total guardado <strong id="valorGuardado">R$ 0,00</strong></p>
+      <p>Falta pagar <strong id="faltaPagar">R$ 0,00</strong></p>
+    </section>
+
+    <!-- =============================
+         BOTÃO RESET
+    ============================= -->
+    <button class="btn-reset" onclick="resetarTudo()">
+      🗑️ Resetar tudo
+    </button>
+
+  </main>
+
+  <!-- =============================
+       RODAPÉ
+  ============================= -->
+  <footer class="rodape">
+    Desenvolvido por <strong>Wellington Andrade</strong>
+  </footer>
+
+  <!-- =============================
+       SCRIPTS
+  ============================= -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,452 @@
+/* =============================
+   BANNER TOPO FULL
+============================= */
+.banner {
+  width: 100%;
+  height: 330px; 
+  overflow: hidden;
+  border-radius: 24px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center; 
+}
+
+/* =============================
+   TABLET
+============================= */
+@media (max-width: 800px) {
+  .banner {
+    height: 220px;
+    border-radius: 20px;
+  }
+
+  .banner img {
+    object-position: center;
+  }
+}
+
+/* =============================
+   CELULAR
+============================= */
+@media (max-width: 500px) {
+  .banner {
+    height: 150px;
+    border-radius: 16px;
+  }
+
+  .banner img {
+    object-fit: contain; /* 👈 mostra a imagem inteira */
+    background: #020617; /* fundo escuro bonito */
+  }
+}
+
+/* =============================
+   BANNER TECNOLÓGICO
+============================= */
+.titulo {
+  text-align: center;
+  color: white;
+  padding: 45px 20px;
+  border-radius: 24px;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #020617, #1e293b);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  font-size: 34px;
+  letter-spacing: 1px;
+}
+
+/* =============================
+    GRID ANIMADO
+============================= */
+
+.titulo::before {
+  content: "";
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background-image:
+    linear-gradient(rgba(56,189,248,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridMove 12s linear infinite;
+}
+
+/* =============================
+   BRILHO NO TÍTULO 
+============================= */
+.titulo::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.25),
+    transparent
+  );
+  animation: brilho 4s infinite;
+}
+
+@keyframes gridMove {
+  0% { transform: translate(0,0); }
+  100% { transform: translate(40px,40px); }
+}
+
+@keyframes brilho {
+  0% { left: -120%; }
+  60% { left: 120%; }
+  100% { left: 120%; }
+}
+
+/* =============================
+   CARDS
+============================= */
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 25px;
+  margin-bottom: 25px;
+  border-radius: 22px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  backdrop-filter: blur(12px);
+  transition: 0.25s;
+}
+
+.card:hover {
+  transform: translateY(-5px) scale(1.01);
+}
+
+.card h2 {
+  width: 100%;
+  margin-bottom: 18px;
+  color: #0f172a;
+  font-size: 22px;
+}
+
+/* =============================
+   INPUTS
+============================= */
+input {
+  padding: 14px;
+  margin: 6px;
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 12px;
+  outline: none;
+  font-size: 15px;
+  background: #f8fafc;
+  transition: 0.2s;
+}
+
+input:hover {
+  border-color: #60a5fa;
+}
+
+input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+/* =============================
+   BOTÕES
+============================= */
+button {
+  position: relative;
+  overflow: hidden;
+  padding: 14px 22px;
+  margin: 6px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.35);
+}
+
+/* =============================
+   EFEITO DE BRILHO NO BOTÃO
+============================= */
+button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.4),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+button:hover::after {
+  left: 120%;
+}
+
+/* =============================
+   BOTÃO EXCLUIR
+============================= */
+.btn-excluir {
+  background: linear-gradient(135deg, #991b1b, #dc2626);
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+/* =============================
+   BOTÃO RESET
+============================= */
+.btn-reset {
+  width: fit-content;
+  display: block;
+  margin: 25px auto 0;
+  padding: 10px 18px;
+  font-size: 14px;
+  background: transparent;
+  color: #ef4444;
+  border: 2px solid #ef4444;
+  border-radius: 10px;
+  transition: 0.3s;
+}
+
+.btn-reset:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.05);
+}
+
+/* =============================
+   TABELAS
+============================= */
+.card table {
+  width: 100%;
+  margin-top: 15px;
+  border-collapse: collapse;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+th {
+  background: #0f172a;
+  color: white;
+  padding: 14px;
+}
+
+td {
+  padding: 14px;
+  text-align: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+tr {
+  transition: 0.2s;
+}
+
+tr:hover {
+  background: #e0f2fe;
+  transform: scale(1.01);
+}
+
+/* =============================
+   RESUMO
+============================= */
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 25px;
+}
+
+.resumo p {
+  color: white;
+  padding: 25px;
+  border-radius: 22px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+  font-size: 17px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: 0.25s;
+}
+
+.resumo p:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* =============================
+   CORES DO RESUMO
+============================= */
+.resumo p:nth-child(1) {
+  background: linear-gradient(135deg, #020617, #1e293b);
+}
+
+.resumo p:nth-child(2) {
+  background: linear-gradient(135deg, #064e3b, #059669);
+}
+
+.resumo p:nth-child(3) {
+  background: linear-gradient(135deg, #7f1d1d, #dc2626);
+}
+
+/* =============================
+   VALORES DO RESUMO
+============================= */
+.resumo strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 32px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.resumo p:nth-child(2) strong {
+  color: #86efac;
+}
+
+.resumo p:nth-child(3) strong {
+  color: #fecaca;
+}
+
+/* =============================
+   RESPONSIVO
+============================= */
+@media (max-width: 800px) {
+  .titulo {
+    font-size: 28px;
+  }
+
+  input {
+    flex: 1 1 100%;
+  }
+
+  .resumo {
+    grid-template-columns: 1fr;
+  }
+
+  table {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 20px 10px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .titulo {
+    font-size: 24px;
+    padding: 28px 15px;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th, td {
+    padding: 10px;
+  }
+}
+
+/* =============================
+   TOAST (MENSAGEM)
+============================= */
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+
+  background: linear-gradient(135deg, #064e3b, #059669);
+  color: white;
+
+  padding: 14px 20px;
+  border-radius: 14px;
+
+  box-shadow: 0 15px 35px rgba(0,0,0,0.35);
+
+  font-weight: 600;
+  font-size: 14px;
+
+  z-index: 999;
+
+  opacity: 0;
+  transform: translateY(20px);
+
+  animation: toastEntrada 0.3s ease forwards;
+}
+
+/* =============================
+   ANIMAÇÃO DE ENTRADA DO TOAST
+============================= */
+@keyframes toastEntrada {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================
+   GRAFICO PEQUENO
+============================= */
+/* =============================
+   GRAFICO PEQUENO
+============================= */
+.grafico-box {
+  width: 100%;
+  max-width: 350px;
+  height: 180px;
+  margin: 0 auto;
+}
+
+#graficoGuardado {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* =============================
+   RODAPÉ
+============================= */
+.rodape {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  color: #cbd5e1;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.rodape strong {
+  color: #38bdf8;
+}
