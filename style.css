@@ -358,13 +358,12 @@ tr:hover {
 
 @media (max-width: 350px) {
   body {
-  min-height: 50vh;
+  min-height: 100vh;
   background:
     radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.15), transparent),
     radial-gradient(circle at 80% 30%, rgba(56, 189, 248, 0.15), transparent),
     radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.1), transparent),
     #0f172a;
-
   padding: 40px 0;
 }
 
@@ -390,11 +389,9 @@ tr:hover {
    CONTAINER 
 ============================= */
 .container {
-  max-width: 900px;   /* largura do app */
-  margin: 0 auto;     /* centraliza */
-  padding: 0 15px;    /* respiro lateral */
-}
-
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 0 15px;
 /* =============================
    TOAST (MENSAGEM)
 ============================= */
