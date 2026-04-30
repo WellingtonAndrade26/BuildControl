@@ -1,4 +1,4 @@
-const CACHE_NAME = "buildcontrol-v2"
+const CACHE_NAME = "buildcontrol-v3"
 
 const FILES_TO_CACHE = [
   "./",
@@ -41,12 +41,22 @@ self.addEventListener("activate", event => {
 })
 
 // =============================
-// FETCH (offline first)
+// FETCH (network first)
 // =============================
 self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request)
-    })
+    fetch(event.request)
+      .then(response => {
+        // Atualiza o cache com a versão nova
+        const responseClone = response.clone()
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone)
+        })
+        return response
+      })
+      .catch(() => {
+        // Só usa cache se estiver offline
+        return caches.match(event.request)
+      })
   )
 })
