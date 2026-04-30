@@ -5,7 +5,11 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
@@ -14,7 +18,7 @@ body {
     radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.18), transparent 30%),
     radial-gradient(circle at 80% 30%, rgba(56, 189, 248, 0.16), transparent 30%),
     radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.12), transparent 35%),
-    #0f172a;
+    #0f172a !important;
   color: #1f2937;
   padding: 40px 0;
 }
@@ -206,7 +210,7 @@ tr {
 }
 
 tr:hover {
-  background: #e0f2fe;
+  background: #0fe10f;
   transform: scale(1.01);
 }
 
