@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://SEUUSUARIO.github.io/material-rancho-app/">
+  <a href="https://wellingtonandrade26.github.io/BuildControl/">
     <img src="https://img.shields.io/badge/🔗%20Acessar%20Aplicação-2563eb?style=for-the-badge&logo=google-chrome&logoColor=white">
   </a>
 </p>
