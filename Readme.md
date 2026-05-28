@@ -1,61 +1,37 @@
-<h1 align="center">🚀 BuildControl</h1>
+# BuildControl PWA
 
-<p align="center">
-  Gestão inteligente de materiais e finanças para construção 🏗️
-</p>
+BuildControl is a mobile-first Progressive Web App for construction material cost control.
 
-<p align="center">
-  <a href="https://wellingtonandrade26.github.io/BuildControl/">
-    <img src="https://img.shields.io/badge/🔗%20Acessar%20Aplicação-2563eb?style=for-the-badge&logo=google-chrome&logoColor=white">
-  </a>
-</p>
+## Features
 
-<p align="center">
-  <img src="./preview.png" width="90%">
-</p>
+- Add, edit, and delete construction materials
+- Add, edit, and delete monthly saved money
+- Automatic material status:
+  - Pending
+  - Partial
+  - Completed
+- Summary cards
+- Chart.js dashboard
+- LocalStorage persistence
+- PWA installation support
+- Offline cache with Service Worker
 
----
+## PWA Files
 
-## 💡 Sobre
+- `manifest.json`
+- `sw.js`
+- `imagens/icon-192.png`
+- `imagens/icon-512.png`
 
-O **BuildControl** é uma aplicação web desenvolvida para simplificar o controle de materiais e o gerenciamento financeiro de obras.
+## How to Install on Android
 
-Com uma interface moderna e intuitiva, permite acompanhar em tempo real:
+1. Publish the project on GitHub Pages.
+2. Open the site on Google Chrome.
+3. Tap **Install app** or use Chrome menu > **Add to Home screen**.
+4. The app will appear on the phone home screen.
 
-✔ gastos com materiais  
-✔ valores guardados  
-✔ saldo restante  
+## Important
 
-Tudo de forma simples, rápida e acessível.
+The app installs as a PWA. It behaves like an Android app on the phone, but it is not a Play Store APK yet.
 
----
-
-## ⚡ Diferenciais
-
-🚀 Interface moderna estilo dashboard  
-📱 Instalável como aplicativo (PWA)  
-💾 Funciona offline  
-🔄 Atualização automática de valores  
-📊 Controle financeiro em tempo real  
-
----
-
-## 🧠 Tecnologias
-
-<p align="center">
-  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white">
-  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white">
-  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black">
-  <img src="https://img.shields.io/badge/PWA-000000?style=for-the-badge&logo=googlechrome&logoColor=white">
-</p>
-
----
-
-## 📱 Instalação
-
-1. Acesse o link da aplicação  
-2. No Chrome, clique nos 3 pontos  
-3. Selecione:
-
-```txt
-Adicionar à tela inicial
+To generate a real APK later, use a TWA tool such as Bubblewrap.

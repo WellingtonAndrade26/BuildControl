@@ -1,274 +1,362 @@
-// =============================
-// DADOS
-// =============================
-let materiais = JSON.parse(localStorage.getItem("materiais")) || []
-let guardadoPorMes = JSON.parse(localStorage.getItem("guardado")) || {}
-let graficoGuardado = null
+let materiais = JSON.parse(localStorage.getItem("buildcontrol_materiais")) || [];
+let guardados = JSON.parse(localStorage.getItem("buildcontrol_guardados")) || [];
 
-// =============================
-// SALVAR DADOS
-// =============================
-function salvarDados() {
-  localStorage.setItem("materiais", JSON.stringify(materiais))
-  localStorage.setItem("guardado", JSON.stringify(guardadoPorMes))
+let editandoMaterial = null;
+let editandoGuardado = null;
+let grafico = null;
+let eventoInstalacao = null;
+
+const moeda = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL"
+});
+
+function salvarLocal() {
+  localStorage.setItem("buildcontrol_materiais", JSON.stringify(materiais));
+  localStorage.setItem("buildcontrol_guardados", JSON.stringify(guardados));
 }
 
-// =============================
-// TOAST (MENSAGEM BONITA)
-// =============================
-function mostrarMensagem(msg) {
-  const toast = document.createElement("div")
-  toast.innerText = msg
-  toast.className = "toast"
-  document.body.appendChild(toast)
+function toast(texto) {
+  const antigo = document.querySelector(".toast");
+  if (antigo) antigo.remove();
 
-  setTimeout(() => {
-    toast.style.opacity = "0"
-    toast.style.transform = "translateY(20px)"
-  }, 1800)
+  const div = document.createElement("div");
+  div.className = "toast";
+  div.textContent = texto;
+  document.body.appendChild(div);
 
-  setTimeout(() => toast.remove(), 2200)
+  setTimeout(() => div.remove(), 1800);
 }
 
-// =============================
-// ADICIONAR MATERIAL
-// =============================
-function adicionarMaterial() {
-  const material = document.getElementById("material").value.trim()
-  const quantidade = Number(document.getElementById("quantidade").value)
-  const valor = Number(document.getElementById("valor").value)
+function salvarMaterial() {
+  const nome = document.getElementById("nomeMaterial").value.trim();
+  const quantidade = Number(document.getElementById("quantidadeMaterial").value);
+  const valor = Number(document.getElementById("valorMaterial").value);
 
-  if (material === "" || quantidade <= 0 || valor <= 0) {
-    mostrarMensagem("Preencha tudo corretamente!")
-    return
+  if (!nome || quantidade <= 0 || valor <= 0) {
+    toast("Preencha todos os campos do material.");
+    return;
   }
 
-  materiais.push({ material, quantidade, valor })
+  const novoMaterial = {
+    nome,
+    quantidade,
+    valor,
+    status: "Pendente"
+  };
 
-  salvarDados()
-  limparCamposMaterial()
-  mostrarMateriais()
-  calcularResumo()
+  if (editandoMaterial !== null) {
+    materiais[editandoMaterial] = novoMaterial;
+    toast("Material atualizado.");
+  } else {
+    materiais.push(novoMaterial);
+    toast("Material adicionado.");
+  }
 
-  mostrarMensagem("Material adicionado com sucesso!")
+  salvarLocal();
+  cancelarEdicaoMaterial();
+  renderizar();
 }
 
-// =============================
-// MOSTRAR MATERIAIS
-// =============================
-function mostrarMateriais() {
-  const tabela = document.getElementById("tabelaMateriais")
-  tabela.innerHTML = ""
+function editarMaterial(index) {
+  const item = materiais[index];
+
+  document.getElementById("nomeMaterial").value = item.nome;
+  document.getElementById("quantidadeMaterial").value = item.quantidade;
+  document.getElementById("valorMaterial").value = item.valor;
+
+  editandoMaterial = index;
+  document.getElementById("btnMaterial").textContent = "Salvar";
+  document.getElementById("cancelarMaterial").classList.remove("hidden");
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function cancelarEdicaoMaterial() {
+  editandoMaterial = null;
+
+  document.getElementById("nomeMaterial").value = "";
+  document.getElementById("quantidadeMaterial").value = "";
+  document.getElementById("valorMaterial").value = "";
+
+  document.getElementById("btnMaterial").textContent = "+ Adicionar";
+  document.getElementById("cancelarMaterial").classList.add("hidden");
+}
+
+function excluirMaterial(index) {
+  if (!confirm("Deseja excluir este material?")) return;
+
+  materiais.splice(index, 1);
+  salvarLocal();
+  renderizar();
+  toast("Material excluído.");
+}
+
+function atualizarStatusAutomatico() {
+  const totalGuardado = guardados.reduce((soma, item) => soma + item.valor, 0);
+  let saldoDisponivel = totalGuardado;
+
+  materiais.forEach((item) => {
+    const totalMaterial = item.quantidade * item.valor;
+
+    if (saldoDisponivel >= totalMaterial && totalMaterial > 0) {
+      item.status = "Concluído";
+      saldoDisponivel -= totalMaterial;
+    } else if (saldoDisponivel > 0) {
+      item.status = "Parcial";
+      saldoDisponivel = 0;
+    } else {
+      item.status = "Pendente";
+    }
+  });
+}
+
+function salvarGuardado() {
+  const mes = document.getElementById("mesGuardado").value.trim();
+  const valor = Number(document.getElementById("valorGuardadoInput").value);
+
+  if (!mes || valor <= 0) {
+    toast("Preencha o mês e o valor.");
+    return;
+  }
+
+  const novo = { mes, valor };
+
+  if (editandoGuardado !== null) {
+    guardados[editandoGuardado] = novo;
+    toast("Valor atualizado.");
+  } else {
+    guardados.push(novo);
+    toast("Valor adicionado.");
+  }
+
+  salvarLocal();
+  cancelarEdicaoGuardado();
+  renderizar();
+}
+
+function editarGuardado(index) {
+  const item = guardados[index];
+
+  document.getElementById("mesGuardado").value = item.mes;
+  document.getElementById("valorGuardadoInput").value = item.valor;
+
+  editandoGuardado = index;
+  document.getElementById("btnGuardado").textContent = "Salvar";
+  document.getElementById("cancelarGuardado").classList.remove("hidden");
+}
+
+function cancelarEdicaoGuardado() {
+  editandoGuardado = null;
+
+  document.getElementById("mesGuardado").value = "";
+  document.getElementById("valorGuardadoInput").value = "";
+
+  document.getElementById("btnGuardado").textContent = "+ Adicionar";
+  document.getElementById("cancelarGuardado").classList.add("hidden");
+}
+
+function excluirGuardado(index) {
+  if (!confirm("Deseja excluir este valor?")) return;
+
+  guardados.splice(index, 1);
+  salvarLocal();
+  renderizar();
+  toast("Valor excluído.");
+}
+
+function renderizarMateriais() {
+  const lista = document.getElementById("listaMateriais");
+  lista.innerHTML = "";
+
+  if (materiais.length === 0) {
+    lista.innerHTML = `
+      <tr>
+        <td colspan="6" class="empty">Nenhum material adicionado ainda</td>
+      </tr>
+    `;
+    return;
+  }
 
   materiais.forEach((item, index) => {
-    const total = item.quantidade * item.valor
+    const total = item.quantidade * item.valor;
+    const classe = item.status
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 
-    tabela.innerHTML += `
+    lista.innerHTML += `
       <tr>
-        <td>${item.material}</td>
+        <td>${item.nome}</td>
         <td>${item.quantidade}</td>
-        <td>R$ ${item.valor.toFixed(2)}</td>
-        <td>R$ ${total.toFixed(2)}</td>
+        <td>${moeda.format(item.valor)}</td>
+        <td>${moeda.format(total)}</td>
+        <td><span class="status ${classe}">${item.status}</span></td>
         <td>
-          <button class="btn-excluir" onclick="excluirMaterial(${index})">
-            Excluir
-          </button>
+          <div class="actions">
+            <button class="icon-btn" onclick="editarMaterial(${index})" title="Editar">✎</button>
+            <button class="icon-btn" onclick="excluirMaterial(${index})" title="Excluir">🗑</button>
+          </div>
         </td>
       </tr>
-    `
-  })
+    `;
+  });
 }
 
-// =============================
-// ADICIONAR GUARDADO
-// =============================
-function adicionarGuardado() {
-  const mes = document.getElementById("mes").value.trim()
-  const valorMes = Number(document.getElementById("valorMes").value)
+function renderizarGuardados() {
+  const lista = document.getElementById("listaGuardado");
+  lista.innerHTML = "";
 
-  if (mes === "" || valorMes <= 0) {
-    mostrarMensagem("Preencha o mês e o valor!")
-    return
-  }
-
-  if (guardadoPorMes[mes]) {
-    guardadoPorMes[mes] += valorMes
-  } else {
-    guardadoPorMes[mes] = valorMes
-  }
-
-  salvarDados()
-
-  document.getElementById("mes").value = ""
-  document.getElementById("valorMes").value = ""
-
-  mostrarGuardado()
-  calcularResumo()
-  atualizarGrafico()
-
-  mostrarMensagem("Valor guardado atualizado!")
-}
-
-// =============================
-// MOSTRAR GUARDADO
-// =============================
-function mostrarGuardado() {
-  const tabela = document.getElementById("tabelaGuardado")
-  tabela.innerHTML = ""
-
-  for (let mes in guardadoPorMes) {
-    tabela.innerHTML += `
+  if (guardados.length === 0) {
+    lista.innerHTML = `
       <tr>
-        <td>${mes}</td>
-        <td>R$ ${guardadoPorMes[mes].toFixed(2)}</td>
+        <td colspan="3" class="empty">Nenhum mês adicionado ainda</td>
+      </tr>
+    `;
+    return;
+  }
+
+  guardados.forEach((item, index) => {
+    lista.innerHTML += `
+      <tr>
+        <td>${item.mes}</td>
+        <td>${moeda.format(item.valor)}</td>
         <td>
-          <button class="btn-excluir" onclick="excluirGuardado('${mes}')">
-            Excluir
-          </button>
+          <div class="actions">
+            <button class="icon-btn" onclick="editarGuardado(${index})" title="Editar">✎</button>
+            <button class="icon-btn" onclick="excluirGuardado(${index})" title="Excluir">🗑</button>
+          </div>
         </td>
       </tr>
-    `
-  }
+    `;
+  });
 }
 
-// =============================
-// GRAFICO DO GUARDADO NO MES
-// =============================
+function atualizarResumo() {
+  const totalMateriais = materiais.reduce((soma, item) => soma + item.quantidade * item.valor, 0);
+  const totalGuardado = guardados.reduce((soma, item) => soma + item.valor, 0);
+  const faltaPagar = Math.max(totalMateriais - totalGuardado, 0);
+
+  document.getElementById("totalMateriais").textContent = moeda.format(totalMateriais);
+  document.getElementById("totalGuardado").textContent = moeda.format(totalGuardado);
+  document.getElementById("faltaPagar").textContent = moeda.format(faltaPagar);
+}
 
 function atualizarGrafico() {
-  const canvas = document.getElementById("graficoGuardado")
+  const canvas = document.getElementById("graficoGuardado");
 
-  if (!canvas) return
+  if (grafico) grafico.destroy();
 
-  const meses = Object.keys(guardadoPorMes)
-  const valores = Object.values(guardadoPorMes)
+  const labels = guardados.map(item => item.mes);
+  const valores = guardados.map(item => item.valor);
 
-  if (graficoGuardado) {
-    graficoGuardado.destroy()
-  }
-
-  const ctx = canvas.getContext("2d")
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, 180)
-  gradient.addColorStop(0, "#38bdf8")
-  gradient.addColorStop(1, "#1d4ed8")
-
-  graficoGuardado = new Chart(canvas, {
+  grafico = new Chart(canvas, {
     type: "bar",
     data: {
-      labels: meses,
-      datasets: [
-        {
-          label: "Valor guardado R$",
-          data: valores,
-          backgroundColor: gradient,
-          borderColor: "#38bdf8",
-          borderWidth: 1,
-          borderRadius: 6
-        }
-      ]
+      labels,
+      datasets: [{
+        data: valores,
+        backgroundColor: "rgba(59, 130, 246, 0.78)",
+        borderColor: "rgba(96, 165, 250, 1)",
+        borderWidth: 1,
+        borderRadius: 4
+      }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-
       plugins: {
         legend: {
-          display: true
+          display: false
         }
       },
-
       scales: {
         x: {
           ticks: {
-            font: { size: 10 }
+            color: "#b8b8b8",
+            font: {
+              size: 10
+            }
+          },
+          grid: {
+            display: false
           }
         },
         y: {
+          beginAtZero: true,
           ticks: {
-            font: { size: 10 }
+            color: "#b8b8b8",
+            font: {
+              size: 10
+            },
+            callback: function(value) {
+              return moeda.format(value).replace(",00", "");
+            }
           },
-          beginAtZero: true
+          grid: {
+            color: "rgba(255, 255, 255, .06)"
+          }
         }
       }
     }
-  })
-}
-// =============================
-// RESUMO
-// =============================
-function calcularResumo() {
-  const totalMateriais = materiais.reduce((soma, item) => {
-    return soma + (item.quantidade * item.valor)
-  }, 0)
-
-  const totalGuardado = Object.values(guardadoPorMes).reduce((soma, valor) => {
-    return soma + valor
-  }, 0)
-
-  const falta = totalMateriais - totalGuardado
-
-  document.getElementById("totalMateriais").innerText = `R$ ${totalMateriais.toFixed(2)}`
-  document.getElementById("valorGuardado").innerText = `R$ ${totalGuardado.toFixed(2)}`
-  document.getElementById("faltaPagar").innerText = `R$ ${falta > 0 ? falta.toFixed(2) : "0.00"}`
+  });
 }
 
-// =============================
-// LIMPAR CAMPOS
-// =============================
-function limparCamposMaterial() {
-  document.getElementById("material").value = ""
-  document.getElementById("quantidade").value = ""
-  document.getElementById("valor").value = ""
-}
-
-// =============================
-// EXCLUIR MATERIAL
-// =============================
-function excluirMaterial(index) {
-  if (confirm("Deseja excluir este material?")) {
-    materiais.splice(index, 1)
-    salvarDados()
-    mostrarMateriais()
-    calcularResumo()
-
-    mostrarMensagem("Material removido!")
-  }
-}
-
-// =============================
-// EXCLUIR GUARDADO
-// =============================
-function excluirGuardado(mes) {
-  if (confirm("Deseja excluir esse valor guardado?")) {
-    delete guardadoPorMes[mes]
-    salvarDados()
-    mostrarGuardado()
-    calcularResumo()
-    atualizarGrafico()
-
-    mostrarMensagem("Valor removido!")
-  }
-}
-
-// =============================
-// RESET TOTAL
-// =============================
 function resetarTudo() {
-  if (confirm("Tem certeza que quer apagar tudo?")) {
-    localStorage.clear()
-    location.reload()
+  if (!confirm("Tem certeza que deseja apagar tudo?")) return;
+
+  materiais = [];
+  guardados = [];
+  salvarLocal();
+  cancelarEdicaoMaterial();
+  cancelarEdicaoGuardado();
+  renderizar();
+  toast("Tudo foi resetado.");
+}
+
+function renderizar() {
+  atualizarStatusAutomatico();
+  salvarLocal();
+  renderizarMateriais();
+  renderizarGuardados();
+  atualizarResumo();
+  atualizarGrafico();
+}
+
+function configurarPWA() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js");
+    });
   }
+
+  const btnInstalar = document.getElementById("btnInstalar");
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    eventoInstalacao = event;
+    btnInstalar.classList.remove("hidden");
+  });
+
+  btnInstalar.addEventListener("click", async () => {
+    if (!eventoInstalacao) return;
+
+    eventoInstalacao.prompt();
+    const escolha = await eventoInstalacao.userChoice;
+
+    if (escolha.outcome === "accepted") {
+      btnInstalar.classList.add("hidden");
+      toast("App instalado com sucesso!");
+    }
+
+    eventoInstalacao = null;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    btnInstalar.classList.add("hidden");
+    eventoInstalacao = null;
+  });
 }
 
-// =============================
-// INICIAR APP
-// =============================
-function iniciar() {
-  mostrarMateriais()
-  mostrarGuardado()
-  calcularResumo()
-  atualizarGrafico()
-}
-
-iniciar()
+renderizar();
+configurarPWA();

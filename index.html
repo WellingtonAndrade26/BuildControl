@@ -1,143 +1,137 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>BuildControl</title>
 
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#1f201d" />
+  <meta name="description" content="App para controle de materiais, dinheiro guardado e gastos de obra." />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+
+  <link rel="icon" href="imagens/icon-192.png" />
+  <link rel="apple-touch-icon" href="imagens/icon-192.png" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">⌂</div>
+        <div class="brand-title">
+          <h1>BuildControl</h1>
+          <span>Controle sua obra</span>
+        </div>
+      </div>
 
-  <main class="container">
+      <button class="menu-btn" aria-label="Menu">...</button>
+    </header>
 
-    <header class="banner">
-  <img src="./banner-buildcontrol.png" alt="BuildControl Banner">
-</header>
+    <button id="btnInstalar" class="install-btn hidden">📲 Instalar app</button>
 
-    <!-- =============================
-         ADICIONAR MATERIAL
-    ============================= -->
-    <section class="card">
-      <h2>Adicionar material</h2>
+    <section class="summary">
+      <article class="summary-card">
+        <p>Total materiais</p>
+        <strong id="totalMateriais">R$ 0,00</strong>
+      </article>
 
-      <input type="text" id="material" placeholder="Nome do material">
-      <input type="number" id="quantidade" placeholder="Quantidade">
-      <input type="number" id="valor" placeholder="Valor unitário R$">
+      <article class="summary-card green">
+        <p>Total guardado</p>
+        <strong id="totalGuardado">R$ 0,00</strong>
+      </article>
 
-      <button onclick="adicionarMaterial()">Adicionar</button>
+      <article class="summary-card red">
+        <p>Falta pagar</p>
+        <strong id="faltaPagar">R$ 0,00</strong>
+      </article>
     </section>
 
-    <!-- =============================
-         LISTA DE MATERIAIS
-    ============================= -->
-    <section class="card">
-      <h2>Lista de materiais</h2>
+    <section class="box">
+      <div class="box-title">
+        <div class="box-title-left">
+          <span class="ico">◈</span>
+          <h2>Materiais</h2>
+        </div>
+        <button class="cancel-btn hidden" id="cancelarMaterial" onclick="cancelarEdicaoMaterial()">Cancelar</button>
+      </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Material</th>
-            <th>Qtd</th>
-            <th>Valor</th>
-            <th>Total</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
+      <div class="form-line">
+        <input id="nomeMaterial" type="text" placeholder="Nome do material" />
+        <input id="quantidadeMaterial" type="number" placeholder="Quantidade" min="0" step="0.01" />
+        <input id="valorMaterial" type="number" placeholder="Valor unit. (R$)" min="0" step="0.01" />
+        <button class="add-btn" id="btnMaterial" onclick="salvarMaterial()">+ Adicionar</button>
+      </div>
 
-        <tbody id="tabelaMateriais"></tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Qtd</th>
+              <th>Valor unit.</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaMateriais"></tbody>
+        </table>
+      </div>
     </section>
 
-    <!-- =============================
-         DINHEIRO GUARDADO
-    ============================= -->
-    <section class="card">
-      <h2>Dinheiro guardado por mês</h2>
+    <section class="box">
+      <div class="box-title">
+        <div class="box-title-left">
+          <span class="ico">▣</span>
+          <h2>Dinheiro guardado por mês</h2>
+        </div>
+        <button class="cancel-btn hidden" id="cancelarGuardado" onclick="cancelarEdicaoGuardado()">Cancelar</button>
+      </div>
 
-      <input list="meses" id="mes" placeholder="Escolha o mês">
+      <div class="form-line money">
+        <input id="mesGuardado" type="text" placeholder="Mês (ex: Janeiro)" />
+        <input id="valorGuardadoInput" type="number" placeholder="Valor (R$)" min="0" step="0.01" />
+        <button class="add-btn" id="btnGuardado" onclick="salvarGuardado()">+ Adicionar</button>
+      </div>
 
-      <datalist id="meses">
-        <option value="Janeiro">
-        <option value="Fevereiro">
-        <option value="Março">
-        <option value="Abril">
-        <option value="Maio">
-        <option value="Junho">
-        <option value="Julho">
-        <option value="Agosto">
-        <option value="Setembro">
-        <option value="Outubro">
-        <option value="Novembro">
-        <option value="Dezembro">
-      </datalist>
-
-      <input type="number" id="valorMes" placeholder="Valor guardado R$">
-
-      <button onclick="adicionarGuardado()">Adicionar</button>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Mês</th>
-            <th>Valor guardado</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-
-        <tbody id="tabelaGuardado"></tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th>Valor guardado</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaGuardado"></tbody>
+        </table>
+      </div>
     </section>
 
-    <!-- =============================
-         GRÁFICO
-    ============================= -->
-    <section class="card">
-      <h2>Gráfico de dinheiro guardado por mês</h2>
-      <div class="grafico-box">
-  <canvas id="graficoGuardado"></canvas>
-</div>
+    <section class="box">
+      <div class="box-title">
+        <div class="box-title-left">
+          <span class="ico">▥</span>
+          <h2>Evolução do dinheiro guardado</h2>
+        </div>
+      </div>
+
+      <div class="chart-area">
+        <canvas id="graficoGuardado"></canvas>
+      </div>
     </section>
-
-    <!-- =============================
-         RESUMO
-    ============================= -->
-    <section class="resumo">
-      <p>Total dos materiais <strong id="totalMateriais">R$ 0,00</strong></p>
-      <p>Total guardado <strong id="valorGuardado">R$ 0,00</strong></p>
-      <p>Falta pagar <strong id="faltaPagar">R$ 0,00</strong></p>
-    </section>
-
-    <!-- =============================
-         BOTÃO RESET
-    ============================= -->
-    <button class="btn-reset" onclick="resetarTudo()">
-      🗑️ Resetar tudo
-    </button>
-
   </main>
 
-  <!-- =============================
-       RODAPÉ
-  ============================= -->
-  <footer class="rodape">
-    Desenvolvido por <strong>Wellington Andrade</strong>
+  <footer class="footer-bar">
+    <button class="reset-btn" onclick="resetarTudo()">🗑 Resetar tudo</button>
+    <p class="developer">Desenvolvido por <strong>Wellington Andrade</strong></p>
   </footer>
 
-  <!-- =============================
-       SCRIPTS
-  ============================= -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js")
-    }
-  </script>
-
 </body>
 </html>
