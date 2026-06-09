@@ -305,6 +305,60 @@ function limparTexto(texto) {
     .replace(/'/g, "&#039;");
 }
 
+function obterIconeMaterial(nome) {
+  const texto = String(nome || "").toLowerCase();
+
+  if (texto.includes("telha")) {
+    return { emoji: "🏠", tipo: "tipo-telha" };
+  }
+
+  if (texto.includes("cimento")) {
+    return { emoji: "🪣", tipo: "tipo-cimento" };
+  }
+
+  if (texto.includes("areia")) {
+    return { emoji: "⛰️", tipo: "tipo-areia" };
+  }
+
+  if (texto.includes("pedra") || texto.includes("brita")) {
+    return { emoji: "🪨", tipo: "tipo-pedra" };
+  }
+
+  if (texto.includes("tijolo") || texto.includes("bloco")) {
+    return { emoji: "🧱", tipo: "tipo-tijolo" };
+  }
+
+  if (texto.includes("ferro") || texto.includes("aço") || texto.includes("aco") || texto.includes("vergalhão")) {
+    return { emoji: "⚙️", tipo: "tipo-ferro" };
+  }
+
+  if (texto.includes("madeira") || texto.includes("tábua") || texto.includes("tabua")) {
+    return { emoji: "🪵", tipo: "tipo-madeira" };
+  }
+
+  if (texto.includes("tinta")) {
+    return { emoji: "🎨", tipo: "tipo-tinta" };
+  }
+
+  if (texto.includes("cano") || texto.includes("tubo")) {
+    return { emoji: "🔵", tipo: "tipo-cano" };
+  }
+
+  if (texto.includes("fio") || texto.includes("cabo")) {
+    return { emoji: "🔌", tipo: "tipo-fio" };
+  }
+
+  if (texto.includes("porta")) {
+    return { emoji: "🚪", tipo: "tipo-porta" };
+  }
+
+  if (texto.includes("janela")) {
+    return { emoji: "🪟", tipo: "tipo-janela" };
+  }
+
+  return { emoji: "📦", tipo: "tipo-default" };
+}
+
 function renderizarMateriais() {
   const lista = $("listaMateriais");
   lista.innerHTML = "";
@@ -320,56 +374,136 @@ function renderizarMateriais() {
 
   materiais.forEach((item, index) => {
     const total = Number(item.quantidade || 0) * Number(item.valor || 0);
+
     const classe = String(item.status || "Pendente")
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
+    const infoIcone = obterIconeMaterial(item.nome);
+
     lista.innerHTML += `
-      <tr>
-        <td>${limparTexto(item.nome)}</td>
-        <td>${limparTexto(item.quantidade)}</td>
-        <td>${moeda.format(Number(item.valor || 0))}</td>
-        <td>${moeda.format(total)}</td>
-        <td><span class="status ${classe}">${limparTexto(item.status)}</span></td>
-        <td>
+      <tr class="material-row">
+        <td class="material-name" data-label="Material">
+          <div class="material-cell">
+           <span class="material-icon material-emoji ${infoIcone.tipo}">
+  ${infoIcone.emoji}
+</span>
+
+            </span>
+
+            <strong>${limparTexto(item.nome)}</strong>
+          </div>
+        </td>
+
+        <td data-label="Qtd">${limparTexto(item.quantidade)}</td>
+
+        <td data-label="Valor unit.">
+          ${moeda.format(Number(item.valor || 0))}
+        </td>
+
+        <td data-label="Total">
+          ${moeda.format(total)}
+        </td>
+
+        <td data-label="Status">
+          <span class="status ${classe}">
+            ${limparTexto(item.status)}
+          </span>
+        </td>
+
+        <td data-label="Ações">
           <div class="actions">
-            <button class="icon-btn" onclick="editarMaterial(${index})" title="Editar">✎</button>
-            <button class="icon-btn" onclick="excluirMaterial(${index})" title="Excluir">🗑</button>
+            <button class="icon-btn edit-btn" onclick="editarMaterial(${index})" title="Editar">
+              <i data-lucide="pencil"></i>
+            </button>
+
+            <button class="icon-btn delete-btn" onclick="excluirMaterial(${index})" title="Excluir">
+              <i data-lucide="trash-2"></i>
+            </button>
           </div>
         </td>
       </tr>
     `;
   });
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
 function renderizarGuardados() {
   const lista = $("listaGuardado");
   lista.innerHTML = "";
 
+  const totalGuardado = guardados.reduce(
+    (soma, item) => soma + Number(item.valor || 0),
+    0
+  );
+
+  const totalRodape = $("totalGuardadoRodape");
+  if (totalRodape) {
+    totalRodape.textContent = moeda.format(totalGuardado);
+  }
+
   if (guardados.length === 0) {
     lista.innerHTML = `
-      <tr>
-        <td colspan="3" class="empty">Nenhum mês adicionado ainda</td>
-      </tr>
+      <div class="money-empty">
+        Nenhum mês adicionado ainda
+      </div>
     `;
     return;
   }
 
-  guardados.forEach((item, index) => {
-    lista.innerHTML += `
-      <tr>
-        <td>${limparTexto(item.mes)}</td>
-        <td>${moeda.format(Number(item.valor || 0))}</td>
-        <td>
-          <div class="actions">
-            <button class="icon-btn" onclick="editarGuardado(${index})" title="Editar">✎</button>
-            <button class="icon-btn" onclick="excluirGuardado(${index})" title="Excluir">🗑</button>
-          </div>
-        </td>
-      </tr>
+  const metade = Math.ceil(guardados.length / 2);
+  const primeiraColuna = guardados.slice(0, metade);
+  const segundaColuna = guardados.slice(metade);
+
+  function criarTabela(itens, inicioIndex) {
+    return `
+      <div class="money-table">
+        <div class="money-table-head">
+          <span>Mês</span>
+          <span>Valor guardado (R$)</span>
+          <span>Ações</span>
+        </div>
+
+        ${itens.map((item, i) => {
+          const index = inicioIndex + i;
+
+          return `
+            <div class="money-table-row">
+              <div class="money-month">
+                <i data-lucide="calendar-days"></i>
+                <span>${limparTexto(item.mes)}</span>
+              </div>
+
+              <strong>${moeda.format(Number(item.valor || 0))}</strong>
+
+              <div class="actions money-actions">
+                <button class="icon-btn edit-btn" onclick="editarGuardado(${index})" title="Editar">
+                  <i data-lucide="pencil"></i>
+                </button>
+
+                <button class="icon-btn delete-btn" onclick="excluirGuardado(${index})" title="Excluir">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
     `;
-  });
+  }
+
+  lista.innerHTML = `
+    ${criarTabela(primeiraColuna, 0)}
+    ${criarTabela(segundaColuna, metade)}
+  `;
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
 function atualizarResumo() {
@@ -385,11 +519,49 @@ function atualizarResumo() {
 
   const faltaPagar = Math.max(totalMateriais - totalGuardado, 0);
 
-  $("totalMateriais").textContent = moeda.format(totalMateriais);
-  $("totalGuardado").textContent = moeda.format(totalGuardado);
-  $("faltaPagar").textContent = moeda.format(faltaPagar);
-}
+  const totalMateriaisEl = $("totalMateriais");
+  const totalGuardadoEl = $("totalGuardado");
+  const faltaPagarEl = $("faltaPagar");
 
+  if (totalMateriaisEl) {
+    totalMateriaisEl.textContent = moeda.format(totalMateriais);
+  }
+
+  if (totalGuardadoEl) {
+    totalGuardadoEl.textContent = moeda.format(totalGuardado);
+  }
+
+  if (faltaPagarEl) {
+    faltaPagarEl.textContent = moeda.format(faltaPagar);
+  }
+
+  const qtdMateriaisResumo = $("qtdMateriaisResumo");
+  const qtdMesesResumo = $("qtdMesesResumo");
+  const porcentagemFalta = $("porcentagemFalta");
+  const totalGuardadoRodape = $("totalGuardadoRodape");
+
+  if (qtdMateriaisResumo) {
+    const textoItem = materiais.length === 1 ? "item cadastrado" : "itens cadastrados";
+    qtdMateriaisResumo.textContent = `${materiais.length} ${textoItem}`;
+  }
+
+  if (qtdMesesResumo) {
+    const textoMes = guardados.length === 1 ? "mês registrado" : "meses registrados";
+    qtdMesesResumo.textContent = `${guardados.length} ${textoMes}`;
+  }
+
+  if (porcentagemFalta) {
+    const percentual = totalMateriais > 0
+      ? Math.round((faltaPagar / totalMateriais) * 100)
+      : 0;
+
+    porcentagemFalta.textContent = `${percentual}% do total`;
+  }
+
+  if (totalGuardadoRodape) {
+    totalGuardadoRodape.textContent = moeda.format(totalGuardado);
+  }
+}
 function atualizarGrafico() {
   const canvas = $("graficoGuardado");
   if (!canvas || typeof Chart === "undefined") return;
@@ -409,7 +581,7 @@ function atualizarGrafico() {
           backgroundColor: "rgba(59, 130, 246, 0.78)",
           borderColor: "rgba(96, 165, 250, 1)",
           borderWidth: 1,
-          borderRadius: 4
+          borderRadius: 8
         }
       ]
     },
@@ -472,6 +644,10 @@ function renderizar(sincronizar = true) {
   renderizarGuardados();
   atualizarResumo();
   atualizarGrafico();
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 
   if (sincronizar) {
     salvarOnline();
@@ -548,3 +724,7 @@ async function iniciar() {
 }
 
 iniciar();
+
+if (window.lucide) {
+  lucide.createIcons();
+}

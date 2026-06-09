@@ -15,62 +15,119 @@
   <link rel="icon" href="imagens/icon-192.png" />
   <link rel="apple-touch-icon" href="imagens/icon-192.png" />
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
-
   <main id="appContent" class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-icon">⌂</div>
-        <div class="brand-title">
-          <h1>BuildControl</h1>
-          <span id="usuarioLogado">Controle sua obra</span>
-        </div>
-      </div>
+   <header class="topbar mobile-topbar">
+  <div class="brand">
+    <div class="brand-icon">
+      <i data-lucide="building-2"></i>
+    </div>
 
-      <button id="btnSair" class="logout-btn" type="button">Sair</button>
-    </header>
+    <div class="brand-title">
+      <h1>Build<span>Control</span></h1>
+      <small id="usuarioLogado">Controle sua obra</small>
+    </div>
+  </div>
 
-    <button id="btnInstalar" class="install-btn hidden">📲 Instalar app</button>
+  <button id="btnSair" class="logout-btn" type="button">
+    <i data-lucide="log-out"></i>
+    <span>Sair</span>
+  </button>
+</header>
 
     <section class="sync-line">
       <span id="syncStatus">Conectando...</span>
     </section>
 
-    <section class="summary">
-      <article class="summary-card">
-        <p>Total materiais</p>
-        <strong id="totalMateriais">R$ 0,00</strong>
-      </article>
+    <button id="btnInstalar" class="install-btn hidden">📲 Instalar app</button>
 
-      <article class="summary-card green">
-        <p>Total guardado</p>
-        <strong id="totalGuardado">R$ 0,00</strong>
-      </article>
+    <section class="summary summary-dashboard">
+  <article class="summary-card summary-blue">
+    <div class="summary-icon">
+      <i data-lucide="layers-3"></i>
+    </div>
 
-      <article class="summary-card red">
-        <p>Falta pagar</p>
-        <strong id="faltaPagar">R$ 0,00</strong>
-      </article>
-    </section>
+    <div class="summary-info">
+      <p>Total materiais</p>
+      <strong id="totalMateriais">R$ 0,00</strong>
+      <small id="qtdMateriaisResumo">0 itens cadastrados</small>
+    </div>
 
-    <section class="box">
+    <svg class="mini-chart blue-chart" viewBox="0 0 100 45">
+      <polyline points="5,35 25,34 42,26 58,30 74,12 92,18" />
+    </svg>
+  </article>
+
+  <article class="summary-card summary-green">
+    <div class="summary-icon">
+      <i data-lucide="dollar-sign"></i>
+    </div>
+
+    <div class="summary-info">
+      <p>Total guardado</p>
+      <strong id="totalGuardado">R$ 0,00</strong>
+      <small id="qtdMesesResumo">0 meses registrados</small>
+    </div>
+
+    <svg class="mini-chart green-chart" viewBox="0 0 100 45">
+      <polyline points="5,35 18,32 30,18 43,30 57,10 70,20 84,6 95,12" />
+    </svg>
+  </article>
+
+  <article class="summary-card summary-orange">
+    <div class="summary-icon">
+      <i data-lucide="wallet"></i>
+    </div>
+
+    <div class="summary-info">
+      <p>Falta pagar</p>
+      <strong id="faltaPagar">R$ 0,00</strong>
+      <small id="porcentagemFalta">0% do total</small>
+    </div>
+
+    <svg class="mini-chart orange-chart" viewBox="0 0 100 45">
+      <polyline points="5,34 22,18 36,29 52,25 70,24 84,36 95,38" />
+    </svg>
+  </article>
+</section>
+
+    <!-- MATERIAIS -->
+    <section class="box section-card">
       <div class="box-title">
         <div class="box-title-left">
-          <span class="ico">◈</span>
-          <h2>Materiais</h2>
+          <span class="ico"><i data-lucide="boxes"></i></span>
+<h2>Materiais</h2>
         </div>
-        <button class="cancel-btn hidden" id="cancelarMaterial" onclick="cancelarEdicaoMaterial()">Cancelar</button>
+
+        <button class="cancel-btn hidden" id="cancelarMaterial" type="button">
+          Cancelar
+        </button>
       </div>
 
-      <div class="form-line">
-        <input id="nomeMaterial" type="text" placeholder="Nome do material" />
-        <input id="quantidadeMaterial" type="number" placeholder="Quantidade" min="0" step="0.01" />
-        <input id="valorMaterial" type="number" placeholder="Valor unit. (R$)" min="0" step="0.01" />
-        <button class="add-btn" id="btnMaterial" onclick="salvarMaterial()">+ Adicionar</button>
-      </div>
+      <div class="material-inline-form">
+  <div class="field-group field-material-name">
+    <label for="nomeMaterial">Nome do material</label>
+    <input id="nomeMaterial" type="text" placeholder="Ex.: Telha, Cimento..." />
+  </div>
+
+  <div class="field-group">
+    <label for="quantidadeMaterial">Quantidade</label>
+    <input id="quantidadeMaterial" type="number" placeholder="Ex.: 20" min="0" step="0.01" />
+  </div>
+
+  <div class="field-group">
+    <label for="valorMaterial">Valor unit. (R$)</label>
+    <input id="valorMaterial" type="number" placeholder="Ex.: 15,00" min="0" step="0.01" />
+  </div>
+
+  <button class="add-btn material-add-btn" id="btnMaterial" type="button">
+    + Adicionar material
+  </button>
+</div>
 
       <div class="table-wrap">
         <table>
@@ -89,54 +146,84 @@
       </div>
     </section>
 
-    <section class="box">
+    <!-- GUARDADO -->
+   <!-- GUARDADO -->
+<section class="box section-card money-section">
+  <div class="money-header">
+    <div class="box-title-left money-title">
+      <span class="ico"><i data-lucide="circle-dollar-sign"></i></span>
+      <h2>Dinheiro guardado por mês</h2>
+    </div>
+
+    <div class="money-inline-form">
+      <button class="cancel-btn hidden" id="cancelarGuardado" type="button">
+        Cancelar
+      </button>
+
+      <div class="field-group">
+        <select id="mesGuardado" class="month-select">
+          <option value="">Selecione o mês</option>
+          <option value="Janeiro">Janeiro</option>
+          <option value="Fevereiro">Fevereiro</option>
+          <option value="Março">Março</option>
+          <option value="Abril">Abril</option>
+          <option value="Maio">Maio</option>
+          <option value="Junho">Junho</option>
+          <option value="Julho">Julho</option>
+          <option value="Agosto">Agosto</option>
+          <option value="Setembro">Setembro</option>
+          <option value="Outubro">Outubro</option>
+          <option value="Novembro">Novembro</option>
+          <option value="Dezembro">Dezembro</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="money-label" for="valorGuardadoInput">Valor (R$)</label>
+        <input id="valorGuardadoInput" type="number" placeholder="Ex.: 150,00" min="0" step="0.01" />
+      </div>
+
+      <button class="add-btn money-add-btn" id="btnGuardado" type="button">
+        + Adicionar valor
+      </button>
+    </div>
+  </div>
+
+  <div id="listaGuardado" class="money-board"></div>
+
+  <div class="money-total-row">
+    <div>
+      <i data-lucide="circle-dollar-sign"></i>
+      <span>Total guardado até o momento</span>
+    </div>
+
+    <strong id="totalGuardadoRodape">R$ 0,00</strong>
+  </div>
+</section>
+
+    <!-- GRÁFICO -->
+    <section class="box section-card">
       <div class="box-title">
         <div class="box-title-left">
-          <span class="ico">▣</span>
-          <h2>Dinheiro guardado por mês</h2>
-        </div>
-        <button class="cancel-btn hidden" id="cancelarGuardado" onclick="cancelarEdicaoGuardado()">Cancelar</button>
-      </div>
-
-      <div class="form-line money">
-        <input id="mesGuardado" type="text" placeholder="Mês (ex: Janeiro)" />
-        <input id="valorGuardadoInput" type="number" placeholder="Valor (R$)" min="0" step="0.01" />
-        <button class="add-btn" id="btnGuardado" onclick="salvarGuardado()">+ Adicionar</button>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Mês</th>
-              <th>Valor guardado</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="listaGuardado"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="box">
-      <div class="box-title">
-        <div class="box-title-left">
-          <span class="ico">▥</span>
-          <h2>Evolução do dinheiro guardado</h2>
+          <span class="ico"><i data-lucide="chart-column"></i></span>
+<h2>Evolução do dinheiro guardado</h2>
         </div>
       </div>
 
-      <div class="chart-area">
+      <div class="chart-area chart-mobile">
         <canvas id="graficoGuardado"></canvas>
       </div>
     </section>
   </main>
 
   <footer id="footerBar" class="footer-bar">
-    <button class="reset-btn" onclick="resetarTudo()">🗑 Resetar tudo</button>
+    <button class="reset-btn" id="btnResetar" type="button">🗑 Resetar tudo</button>
     <p class="developer">Desenvolvido por <strong>Wellington Andrade</strong></p>
   </footer>
 
-  <script src="script.js"></script>
+    <script src="script.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
 </body>
 </html>
