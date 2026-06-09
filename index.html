@@ -19,20 +19,25 @@
 </head>
 
 <body>
-  <main class="app">
+
+  <main id="appContent" class="app">
     <header class="topbar">
       <div class="brand">
         <div class="brand-icon">⌂</div>
         <div class="brand-title">
           <h1>BuildControl</h1>
-          <span>Controle sua obra</span>
+          <span id="usuarioLogado">Controle sua obra</span>
         </div>
       </div>
 
-      <button class="menu-btn" aria-label="Menu">...</button>
+      <button id="btnSair" class="logout-btn" type="button">Sair</button>
     </header>
 
     <button id="btnInstalar" class="install-btn hidden">📲 Instalar app</button>
+
+    <section class="sync-line">
+      <span id="syncStatus">Conectando...</span>
+    </section>
 
     <section class="summary">
       <article class="summary-card">
@@ -127,7 +132,7 @@
     </section>
   </main>
 
-  <footer class="footer-bar">
+  <footer id="footerBar" class="footer-bar">
     <button class="reset-btn" onclick="resetarTudo()">🗑 Resetar tudo</button>
     <p class="developer">Desenvolvido por <strong>Wellington Andrade</strong></p>
   </footer>

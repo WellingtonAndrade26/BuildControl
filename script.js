@@ -1,20 +1,26 @@
-let materiais = JSON.parse(localStorage.getItem("buildcontrol_materiais")) || [];
-let guardados = JSON.parse(localStorage.getItem("buildcontrol_guardados")) || [];
+const API_BASE_URL = "https://buildcontrol-api.vercel.app";
 
+const sessaoSalva = JSON.parse(localStorage.getItem("buildcontrol_session"));
+
+if (!sessaoSalva || !sessaoSalva.access_token) {
+  window.location.href = "login.html";
+}
+
+let materiais = [];
+let guardados = [];
 let editandoMaterial = null;
 let editandoGuardado = null;
 let grafico = null;
 let eventoInstalacao = null;
+let salvando = false;
+let timerSalvamento = null;
 
 const moeda = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL"
 });
 
-function salvarLocal() {
-  localStorage.setItem("buildcontrol_materiais", JSON.stringify(materiais));
-  localStorage.setItem("buildcontrol_guardados", JSON.stringify(guardados));
-}
+const $ = (id) => document.getElementById(id);
 
 function toast(texto) {
   const antigo = document.querySelector(".toast");
@@ -25,13 +31,156 @@ function toast(texto) {
   div.textContent = texto;
   document.body.appendChild(div);
 
-  setTimeout(() => div.remove(), 1800);
+  setTimeout(() => div.remove(), 2200);
+}
+
+function atualizarStatusSync(texto) {
+  const el = $("syncStatus");
+  if (el) el.textContent = texto;
+}
+
+function lerBackupLocal() {
+  return {
+    materiais: JSON.parse(localStorage.getItem("buildcontrol_materiais")) || [],
+    guardados: JSON.parse(localStorage.getItem("buildcontrol_guardados")) || []
+  };
+}
+
+function salvarLocal() {
+  localStorage.setItem("buildcontrol_materiais", JSON.stringify(materiais));
+  localStorage.setItem("buildcontrol_guardados", JSON.stringify(guardados));
+}
+
+async function carregarDadosOnline() {
+  try {
+    atualizarStatusSync("Carregando online...");
+
+    const resposta = await fetch(`${API_BASE_URL}/api/dados`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${sessaoSalva.access_token}`
+      }
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      console.error("Erro ao carregar dados:", dados);
+
+      if (resposta.status === 401) {
+        localStorage.removeItem("buildcontrol_session");
+        localStorage.removeItem("buildcontrol_user");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const backup = lerBackupLocal();
+      materiais = backup.materiais;
+      guardados = backup.guardados;
+      renderizar(false);
+      atualizarStatusSync("Erro online");
+      toast(dados.erro || "Erro ao carregar dados online.");
+      return;
+    }
+
+    materiais = Array.isArray(dados.materiais) ? dados.materiais : [];
+    guardados = Array.isArray(dados.guardados) ? dados.guardados : [];
+
+    salvarLocal();
+    renderizar(false);
+    atualizarStatusSync("Online sincronizado");
+  } catch (error) {
+    console.error("Erro ao carregar online:", error);
+
+    const backup = lerBackupLocal();
+    materiais = backup.materiais;
+    guardados = backup.guardados;
+
+    renderizar(false);
+    atualizarStatusSync("Sem conexão");
+    toast("Sem conexão com a API.");
+  }
+}
+
+async function salvarOnline(forcar = false) {
+  salvarLocal();
+
+  if (!sessaoSalva || !sessaoSalva.access_token) return;
+
+  if (salvando) return;
+
+  if (!forcar) {
+    clearTimeout(timerSalvamento);
+    timerSalvamento = setTimeout(() => salvarOnline(true), 500);
+    return;
+  }
+
+  try {
+    salvando = true;
+    atualizarStatusSync("Salvando online...");
+
+    const resposta = await fetch(`${API_BASE_URL}/api/dados`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessaoSalva.access_token}`
+      },
+      body: JSON.stringify({
+        materiais,
+        guardados
+      })
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      console.error("Erro ao salvar online:", resultado);
+
+      if (resposta.status === 401) {
+        localStorage.removeItem("buildcontrol_session");
+        localStorage.removeItem("buildcontrol_user");
+        window.location.href = "login.html";
+        return;
+      }
+
+      atualizarStatusSync("Erro ao salvar");
+      toast(resultado.erro || "Erro ao salvar online.");
+      return;
+    }
+
+    atualizarStatusSync("Salvo online");
+  } catch (error) {
+    console.error("Erro de conexão ao salvar:", error);
+    atualizarStatusSync("Sem conexão");
+    toast("Sem conexão com a API.");
+  } finally {
+    salvando = false;
+  }
+}
+
+function atualizarStatusAutomatico() {
+  const totalGuardado = guardados.reduce((soma, item) => soma + Number(item.valor || 0), 0);
+  let saldoDisponivel = totalGuardado;
+
+  materiais.forEach((item) => {
+    const totalMaterial = Number(item.quantidade || 0) * Number(item.valor || 0);
+
+    if (saldoDisponivel >= totalMaterial && totalMaterial > 0) {
+      item.status = "Concluído";
+      saldoDisponivel -= totalMaterial;
+    } else if (saldoDisponivel > 0) {
+      item.status = "Parcial";
+      saldoDisponivel = 0;
+    } else {
+      item.status = "Pendente";
+    }
+  });
 }
 
 function salvarMaterial() {
-  const nome = document.getElementById("nomeMaterial").value.trim();
-  const quantidade = Number(document.getElementById("quantidadeMaterial").value);
-  const valor = Number(document.getElementById("valorMaterial").value);
+  const nome = $("nomeMaterial").value.trim();
+  const quantidade = Number($("quantidadeMaterial").value);
+  const valor = Number($("valorMaterial").value);
 
   if (!nome || quantidade <= 0 || valor <= 0) {
     toast("Preencha todos os campos do material.");
@@ -53,21 +202,21 @@ function salvarMaterial() {
     toast("Material adicionado.");
   }
 
-  salvarLocal();
   cancelarEdicaoMaterial();
-  renderizar();
+  renderizar(true);
 }
 
 function editarMaterial(index) {
   const item = materiais[index];
+  if (!item) return;
 
-  document.getElementById("nomeMaterial").value = item.nome;
-  document.getElementById("quantidadeMaterial").value = item.quantidade;
-  document.getElementById("valorMaterial").value = item.valor;
+  $("nomeMaterial").value = item.nome;
+  $("quantidadeMaterial").value = item.quantidade;
+  $("valorMaterial").value = item.valor;
 
   editandoMaterial = index;
-  document.getElementById("btnMaterial").textContent = "Salvar";
-  document.getElementById("cancelarMaterial").classList.remove("hidden");
+  $("btnMaterial").textContent = "Salvar";
+  $("cancelarMaterial").classList.remove("hidden");
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -75,52 +224,35 @@ function editarMaterial(index) {
 function cancelarEdicaoMaterial() {
   editandoMaterial = null;
 
-  document.getElementById("nomeMaterial").value = "";
-  document.getElementById("quantidadeMaterial").value = "";
-  document.getElementById("valorMaterial").value = "";
+  $("nomeMaterial").value = "";
+  $("quantidadeMaterial").value = "";
+  $("valorMaterial").value = "";
 
-  document.getElementById("btnMaterial").textContent = "+ Adicionar";
-  document.getElementById("cancelarMaterial").classList.add("hidden");
+  $("btnMaterial").textContent = "+ Adicionar";
+  $("cancelarMaterial").classList.add("hidden");
 }
 
 function excluirMaterial(index) {
   if (!confirm("Deseja excluir este material?")) return;
 
   materiais.splice(index, 1);
-  salvarLocal();
-  renderizar();
+  renderizar(true);
   toast("Material excluído.");
 }
 
-function atualizarStatusAutomatico() {
-  const totalGuardado = guardados.reduce((soma, item) => soma + item.valor, 0);
-  let saldoDisponivel = totalGuardado;
-
-  materiais.forEach((item) => {
-    const totalMaterial = item.quantidade * item.valor;
-
-    if (saldoDisponivel >= totalMaterial && totalMaterial > 0) {
-      item.status = "Concluído";
-      saldoDisponivel -= totalMaterial;
-    } else if (saldoDisponivel > 0) {
-      item.status = "Parcial";
-      saldoDisponivel = 0;
-    } else {
-      item.status = "Pendente";
-    }
-  });
-}
-
 function salvarGuardado() {
-  const mes = document.getElementById("mesGuardado").value.trim();
-  const valor = Number(document.getElementById("valorGuardadoInput").value);
+  const mes = $("mesGuardado").value.trim();
+  const valor = Number($("valorGuardadoInput").value);
 
   if (!mes || valor <= 0) {
     toast("Preencha o mês e o valor.");
     return;
   }
 
-  const novo = { mes, valor };
+  const novo = {
+    mes,
+    valor
+  };
 
   if (editandoGuardado !== null) {
     guardados[editandoGuardado] = novo;
@@ -130,43 +262,51 @@ function salvarGuardado() {
     toast("Valor adicionado.");
   }
 
-  salvarLocal();
   cancelarEdicaoGuardado();
-  renderizar();
+  renderizar(true);
 }
 
 function editarGuardado(index) {
   const item = guardados[index];
+  if (!item) return;
 
-  document.getElementById("mesGuardado").value = item.mes;
-  document.getElementById("valorGuardadoInput").value = item.valor;
+  $("mesGuardado").value = item.mes;
+  $("valorGuardadoInput").value = item.valor;
 
   editandoGuardado = index;
-  document.getElementById("btnGuardado").textContent = "Salvar";
-  document.getElementById("cancelarGuardado").classList.remove("hidden");
+  $("btnGuardado").textContent = "Salvar";
+  $("cancelarGuardado").classList.remove("hidden");
 }
 
 function cancelarEdicaoGuardado() {
   editandoGuardado = null;
 
-  document.getElementById("mesGuardado").value = "";
-  document.getElementById("valorGuardadoInput").value = "";
+  $("mesGuardado").value = "";
+  $("valorGuardadoInput").value = "";
 
-  document.getElementById("btnGuardado").textContent = "+ Adicionar";
-  document.getElementById("cancelarGuardado").classList.add("hidden");
+  $("btnGuardado").textContent = "+ Adicionar";
+  $("cancelarGuardado").classList.add("hidden");
 }
 
 function excluirGuardado(index) {
   if (!confirm("Deseja excluir este valor?")) return;
 
   guardados.splice(index, 1);
-  salvarLocal();
-  renderizar();
+  renderizar(true);
   toast("Valor excluído.");
 }
 
+function limparTexto(texto) {
+  return String(texto ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function renderizarMateriais() {
-  const lista = document.getElementById("listaMateriais");
+  const lista = $("listaMateriais");
   lista.innerHTML = "";
 
   if (materiais.length === 0) {
@@ -179,19 +319,19 @@ function renderizarMateriais() {
   }
 
   materiais.forEach((item, index) => {
-    const total = item.quantidade * item.valor;
-    const classe = item.status
+    const total = Number(item.quantidade || 0) * Number(item.valor || 0);
+    const classe = String(item.status || "Pendente")
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
     lista.innerHTML += `
       <tr>
-        <td>${item.nome}</td>
-        <td>${item.quantidade}</td>
-        <td>${moeda.format(item.valor)}</td>
+        <td>${limparTexto(item.nome)}</td>
+        <td>${limparTexto(item.quantidade)}</td>
+        <td>${moeda.format(Number(item.valor || 0))}</td>
         <td>${moeda.format(total)}</td>
-        <td><span class="status ${classe}">${item.status}</span></td>
+        <td><span class="status ${classe}">${limparTexto(item.status)}</span></td>
         <td>
           <div class="actions">
             <button class="icon-btn" onclick="editarMaterial(${index})" title="Editar">✎</button>
@@ -204,7 +344,7 @@ function renderizarMateriais() {
 }
 
 function renderizarGuardados() {
-  const lista = document.getElementById("listaGuardado");
+  const lista = $("listaGuardado");
   lista.innerHTML = "";
 
   if (guardados.length === 0) {
@@ -219,8 +359,8 @@ function renderizarGuardados() {
   guardados.forEach((item, index) => {
     lista.innerHTML += `
       <tr>
-        <td>${item.mes}</td>
-        <td>${moeda.format(item.valor)}</td>
+        <td>${limparTexto(item.mes)}</td>
+        <td>${moeda.format(Number(item.valor || 0))}</td>
         <td>
           <div class="actions">
             <button class="icon-btn" onclick="editarGuardado(${index})" title="Editar">✎</button>
@@ -233,34 +373,45 @@ function renderizarGuardados() {
 }
 
 function atualizarResumo() {
-  const totalMateriais = materiais.reduce((soma, item) => soma + item.quantidade * item.valor, 0);
-  const totalGuardado = guardados.reduce((soma, item) => soma + item.valor, 0);
+  const totalMateriais = materiais.reduce(
+    (soma, item) => soma + Number(item.quantidade || 0) * Number(item.valor || 0),
+    0
+  );
+
+  const totalGuardado = guardados.reduce(
+    (soma, item) => soma + Number(item.valor || 0),
+    0
+  );
+
   const faltaPagar = Math.max(totalMateriais - totalGuardado, 0);
 
-  document.getElementById("totalMateriais").textContent = moeda.format(totalMateriais);
-  document.getElementById("totalGuardado").textContent = moeda.format(totalGuardado);
-  document.getElementById("faltaPagar").textContent = moeda.format(faltaPagar);
+  $("totalMateriais").textContent = moeda.format(totalMateriais);
+  $("totalGuardado").textContent = moeda.format(totalGuardado);
+  $("faltaPagar").textContent = moeda.format(faltaPagar);
 }
 
 function atualizarGrafico() {
-  const canvas = document.getElementById("graficoGuardado");
+  const canvas = $("graficoGuardado");
+  if (!canvas || typeof Chart === "undefined") return;
 
   if (grafico) grafico.destroy();
 
-  const labels = guardados.map(item => item.mes);
-  const valores = guardados.map(item => item.valor);
+  const labels = guardados.map((item) => item.mes);
+  const valores = guardados.map((item) => Number(item.valor || 0));
 
   grafico = new Chart(canvas, {
     type: "bar",
     data: {
       labels,
-      datasets: [{
-        data: valores,
-        backgroundColor: "rgba(59, 130, 246, 0.78)",
-        borderColor: "rgba(96, 165, 250, 1)",
-        borderWidth: 1,
-        borderRadius: 4
-      }]
+      datasets: [
+        {
+          data: valores,
+          backgroundColor: "rgba(59, 130, 246, 0.78)",
+          borderColor: "rgba(96, 165, 250, 1)",
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ]
     },
     options: {
       responsive: true,
@@ -289,7 +440,7 @@ function atualizarGrafico() {
             font: {
               size: 10
             },
-            callback: function(value) {
+            callback: function (value) {
               return moeda.format(value).replace(",00", "");
             }
           },
@@ -307,30 +458,50 @@ function resetarTudo() {
 
   materiais = [];
   guardados = [];
-  salvarLocal();
+
   cancelarEdicaoMaterial();
   cancelarEdicaoGuardado();
-  renderizar();
+  renderizar(true);
   toast("Tudo foi resetado.");
 }
 
-function renderizar() {
+function renderizar(sincronizar = true) {
   atualizarStatusAutomatico();
   salvarLocal();
   renderizarMateriais();
   renderizarGuardados();
   atualizarResumo();
   atualizarGrafico();
+
+  if (sincronizar) {
+    salvarOnline();
+  }
+}
+
+function sair() {
+  localStorage.removeItem("buildcontrol_session");
+  localStorage.removeItem("buildcontrol_user");
+  window.location.href = "login.html";
+}
+
+function configurarEventos() {
+  $("btnMaterial")?.addEventListener("click", salvarMaterial);
+  $("cancelarMaterial")?.addEventListener("click", cancelarEdicaoMaterial);
+  $("btnGuardado")?.addEventListener("click", salvarGuardado);
+  $("cancelarGuardado")?.addEventListener("click", cancelarEdicaoGuardado);
+  $("btnResetar")?.addEventListener("click", resetarTudo);
+  $("btnSair")?.addEventListener("click", sair);
 }
 
 function configurarPWA() {
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js");
+      navigator.serviceWorker.register("./sw.js").catch(console.error);
     });
   }
 
-  const btnInstalar = document.getElementById("btnInstalar");
+  const btnInstalar = $("btnInstalar");
+  if (!btnInstalar) return;
 
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
@@ -358,5 +529,22 @@ function configurarPWA() {
   });
 }
 
-renderizar();
-configurarPWA();
+window.editarMaterial = editarMaterial;
+window.excluirMaterial = excluirMaterial;
+window.editarGuardado = editarGuardado;
+window.excluirGuardado = excluirGuardado;
+window.sair = sair;
+
+async function iniciar() {
+  configurarEventos();
+  configurarPWA();
+
+  const backup = lerBackupLocal();
+  materiais = backup.materiais;
+  guardados = backup.guardados;
+  renderizar(false);
+
+  await carregarDadosOnline();
+}
+
+iniciar();

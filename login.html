@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrar | BuildControl</title>
+  <meta name="theme-color" content="#1f201d" />
+  <meta name="description" content="Login do BuildControl para salvar dados da obra online." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="imagens/icon-192.png" />
+  <link rel="apple-touch-icon" href="imagens/icon-192.png" />
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-card">
+      <div class="auth-logo">⌂</div>
+      <h1>BuildControl</h1>
+      <p class="auth-subtitle">Entre na sua conta para salvar materiais e valores online.</p>
+
+      <div class="auth-tabs">
+        <button id="tabLogin" class="auth-tab active" type="button">Entrar</button>
+        <button id="tabCadastro" class="auth-tab" type="button">Cadastrar</button>
+      </div>
+
+      <form id="authForm" class="auth-form">
+        <input id="nomeUsuario" class="hidden" type="text" placeholder="Nome" autocomplete="name" />
+        <input id="emailUsuario" type="email" placeholder="Email" autocomplete="email" required />
+        <input id="senhaUsuario" type="password" placeholder="Senha" autocomplete="current-password" required />
+
+        <button id="btnAuth" class="auth-submit" type="submit">Entrar</button>
+      </form>
+
+      <p id="authMensagem" class="auth-message"></p>
+
+      <p class="auth-help">
+        Depois do login você será enviado para o painel normal do BuildControl.
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="login.js"></script>
+</body>
+</html>
