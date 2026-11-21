@@ -1,0 +1,33 @@
+name: Validar prévia do BuildControl
+on:
+  push:
+    branches: [buildcontrol-prisma-validacao-20261121]
+permissions:
+  contents: read
+jobs:
+  painel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - name: Extrair a prévia isolada
+        run: unzip -q auditoria/painel.zip -d auditoria/painel
+      - name: Instalar ferramentas do teste
+        run: npm install --prefix auditoria --no-save --no-audit --no-fund lighthouse@13.6.0 puppeteer-core@25.16.0
+      - name: Medir os dois perfis e testar a atualização
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node auditoria/validar.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: buildcontrol-prisma-validacao
+          path: auditoria/resultados/
+          retention-days: 1
+          if-no-files-found: error
