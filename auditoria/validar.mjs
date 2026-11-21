@@ -36,8 +36,8 @@ const report = {commit: process.env.GITHUB_SHA, lighthouse:[], telas:[], atualiz
 const flags = ['--headless','--no-sandbox','--disable-dev-shm-usage'];
 const currency = new Intl.NumberFormat('pt-BR',{ style:'currency',currency:'BRL' });
 const save = () => writeFile(join(output,'validacao.json'),JSON.stringify(report,null,2));
-async function measure(mode) {
-  const dest = join(output,'lighthouse-' + mode + '.json');
+async function measure(mode,round) {
+  const dest = join(output,'lighthouse-' + mode + '-'+round+'.json');
   const cli = join(here,'node_modules/lighthouse/cli/index.js');
   const args = [cli, address+'/', '--only-categories=performance,accessibility', '--output=json',
     '--output-path='+dest, '--chrome-flags='+flags.join(' '), '--quiet', '--no-enable-error-reporting'];
@@ -48,7 +48,7 @@ async function measure(mode) {
   assert.ok(!lhr.runtimeError, JSON.stringify(lhr.runtimeError));
   assert.equal(new URL(lhr.finalDisplayedUrl).pathname, '/');
   assert.ok(lhr.audits['document-title']?.score === 1);
-  const item = {perfil:mode, data:lhr.fetchTime, versao:lhr.lighthouseVersion, navegador:lhr.userAgent,
+  const item = {rodada:round,perfil:mode, data:lhr.fetchTime, versao:lhr.lighthouseVersion, navegador:lhr.userAgent,
     viewport:lhr.configSettings.screenEmulation, desempenho:Math.round(lhr.categories.performance.score*100),
     acessibilidade:Math.round(lhr.categories.accessibility.score*100),
     falhasAcessibilidade:lhr.categories.accessibility.auditRefs.map(({id})=>lhr.audits[id]).filter(a=>a.score!==null && a.score<1).map(a=>a.id),
@@ -89,14 +89,14 @@ async function previewTests(browser) {
     const profile = await browser.createBrowserContext();
     try {
       const page=await profile.newPage();
-      const touch=width<=768, height=width===320?740:width===390?844:width===768?1024:950;
+      const touch=width<=768, height=width===320?740:width===390?844:width===768?1024:1100;
       await page.setViewport({width,height,hasTouch:touch,isMobile:touch,deviceScaleFactor:1});
       await page.goto(address+'/',{waitUntil:'networkidle0'});
       await page.evaluate(()=>document.fonts.ready);
       const base=await totals(page);
       assert.deepEqual(base,[19995,9350,10645].map(v=>currency.format(v)));
       assert.match(await page.$eval('meta[name=robots]',e=>e.content),/noindex/);
-      if(width===390 || width===1440) await page.screenshot({path:join(output,width===390?'celular.png':'desktop.png'),fullPage:true});
+      if(width===390 || width===1440) await page.screenshot({path:join(output,width===390?'celular.png':'desktop.png'),fullPage:false});
       const add='#view-home [data-open-modal="material"]';
       const reserve='#view-home [data-open-modal="guardado"]';
       if(touch) await page.tap(add);
@@ -197,7 +197,11 @@ async function migration(browser) {
   await page.waitForSelector('#view-home .kpis');
   assert.deepEqual(await totals(page),before);
   assert.equal(await page.evaluate(()=>navigator.onLine),false);
-  const offlineResponse=await page.goto(same,{waitUntil:'domcontentloaded'});
+  const offlineTab=await profile.newPage();
+  await offlineTab.setOfflineMode(true);
+  const offlineResponse=await offlineTab.goto(same,{waitUntil:'domcontentloaded'});
+  await offlineTab.waitForSelector('#view-home .kpis');
+  assert.deepEqual(await totals(offlineTab),before);
   assert.equal(offlineResponse.fromServiceWorker(),true);
   assert.deepEqual(await totals(page),before);
   report.atualizacao.offline={controlado:true,respostaDoServiceWorker:true,totais:await totals(page)};
@@ -206,7 +210,7 @@ async function migration(browser) {
 }
 let browser;
 try {
-  for(const mode of ['mobile','desktop'])await measure(mode);
+  for(const round of [1,2,3]) for(const mode of ['mobile','desktop'])await measure(mode,round);
   browser=await puppeteer.launch({executablePath:process.env.CHROME_PATH,headless:true,args:flags});
   await migration(browser);
   await previewTests(browser);
