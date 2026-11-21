@@ -38,11 +38,12 @@ const currency = new Intl.NumberFormat('pt-BR',{ style:'currency',currency:'BRL'
 const save = () => writeFile(join(output,'validacao.json'),JSON.stringify(report,null,2));
 async function measure(mode) {
   const dest = join(output,'lighthouse-' + mode + '.json');
-  const cli = join(here,'node_modules/lighthouse/cli/bin.js');
+  const cli = join(here,'node_modules/lighthouse/cli/index.js');
   const args = [cli, address+'/', '--only-categories=performance,accessibility', '--output=json',
     '--output-path='+dest, '--chrome-flags='+flags.join(' '), '--quiet', '--no-enable-error-reporting'];
   if (mode === 'desktop') args.push('--preset=desktop');
-  await promisify(execFile)(process.execPath, args, {timeout:125000});
+  const run = await promisify(execFile)(process.execPath, args, {timeout:125000});
+  if (run.stderr.trim()) console.log(run.stderr.slice(-1500));
   const lhr = JSON.parse(await readFile(dest,'utf8'));
   assert.ok(!lhr.runtimeError, JSON.stringify(lhr.runtimeError));
   assert.equal(new URL(lhr.finalDisplayedUrl).pathname, '/');
