@@ -178,8 +178,15 @@ async function migration(browser) {
   await controls(page);
   assert.equal(page.url(),same); assert.deepEqual(await totals(page),before);
   assert.deepEqual(await records(),saved);
+  // The previous page can show new network HTML while the new worker is still installing.
+  await page.waitForFunction(async () => {
+    const reg=await navigator.serviceWorker.getRegistration();
+    const keys=await caches.keys();
+    return reg?.active?.state==='activated' && !reg.installing && !reg.waiting &&
+      keys.some(k=>k.startsWith('buildcontrol-prisma-/atualizacao/')) &&
+      !keys.includes('buildcontrol-pwa-v5');
+  }, {timeout:20000});
   const cacheKeys=await page.evaluate(()=>caches.keys());
-  assert.ok(!cacheKeys.includes('buildcontrol-pwa-v5'));
   report.atualizacao={mesmoEndereco:true,antes:before,depois:await totals(page),dadosIdenticos:true,registros:saved,cache:cacheKeys,api:'simulada'};
   await save();
   await page.setOfflineMode(true);
