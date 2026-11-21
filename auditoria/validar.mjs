@@ -52,7 +52,7 @@ async function measure(mode) {
     viewport:lhr.configSettings.screenEmulation, desempenho:Math.round(lhr.categories.performance.score*100),
     acessibilidade:Math.round(lhr.categories.accessibility.score*100),
     falhasAcessibilidade:lhr.categories.accessibility.auditRefs.map(({id})=>lhr.audits[id]).filter(a=>a.score!==null && a.score<1).map(a=>a.id),
-    avisos:lhr.runWarnings };
+    lcp:lhr.audits['largest-contentful-paint']?.displayValue,tbt:lhr.audits['total-blocking-time']?.displayValue,cls:lhr.audits['cumulative-layout-shift']?.displayValue,avisos:lhr.runWarnings };
   report.lighthouse.push(item);
   console.log('LIGHTHOUSE',JSON.stringify(item));
   await save();
@@ -186,6 +186,9 @@ async function migration(browser) {
       keys.some(k=>k.startsWith('buildcontrol-prisma-/atualizacao/')) &&
       !keys.includes('buildcontrol-pwa-v5');
   }, {timeout:20000});
+  // Activation reloads the old tab exactly once. Observe the resulting document after navigation settles.
+  await page.waitForNetworkIdle({idleTime:1000,timeout:20000});
+  await page.waitForFunction(()=>document.readyState==='complete' && document.querySelector('#syncStatus')?.textContent==='Salvo na conta');
   const cacheKeys=await page.evaluate(()=>caches.keys());
   report.atualizacao={mesmoEndereco:true,antes:before,depois:await totals(page),dadosIdenticos:true,registros:saved,cache:cacheKeys,api:'simulada'};
   await save();
